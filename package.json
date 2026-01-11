@@ -1,0 +1,23 @@
+{
+  "name": "markdown-notes-api",
+  "version": "1.0.0",
+  "description": "A RESTful API for managing markdown notes with file upload, grammar checking, and HTML rendering capabilities.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1",
+    "marked": "^17.0.1",
+    "multer": "^2.0.2",
+    "write-good": "^1.0.8"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
