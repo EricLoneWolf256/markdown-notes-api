@@ -1,32 +1,27 @@
 const express = require('express');
+const cors = require('cors');  // ADD THIS
+const notesRoutes = require('./routes/notes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
+app.use(cors());  // ADD THIS - This fixes the connection issue!
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Test route
+// Routes
+app.use('/api/notes', notesRoutes);
+
+// Health check
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Markdown Notes API is running!',
-    version: '1.0.0',
-    endpoints: {
-      health: 'GET /',
-      notes: 'GET /api/notes',
-      createNote: 'POST /api/notes',
-      getNote: 'GET /api/notes/:id',
-      updateNote: 'PUT /api/notes/:id',
-      deleteNote: 'DELETE /api/notes/:id',
-      renderNote: 'GET /api/notes/:id/render',
-      grammarCheck: 'POST /api/notes/:id/grammar',
-      uploadFile: 'POST /api/notes/upload'
-    }
+    version: '1.0.0'
   });
 });
 
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📝 Press Ctrl+C to stop`);
+  console.log(`📝 Try: http://localhost:${PORT}/api/notes`);
 });
