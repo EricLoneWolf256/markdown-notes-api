@@ -16,6 +16,7 @@
     "express": "^5.2.1",
     "marked": "^17.0.1",
     "multer": "^2.0.2",
+    "uuid": "^13.0.0",
     "write-good": "^1.0.8"
   },
   "devDependencies": {

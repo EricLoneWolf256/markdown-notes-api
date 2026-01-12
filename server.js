@@ -1,16 +1,18 @@
 const express = require('express');
-const cors = require('cors');  // ADD THIS
+const cors = require('cors');
 const notesRoutes = require('./routes/notes');
+const uploadRoutes = require('./routes/upload');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());  // ADD THIS - This fixes the connection issue!
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
-app.use('/api/notes', notesRoutes);
+// Routes - ORDER MATTERS!
+app.use('/api/notes/upload', uploadRoutes);  // Upload route FIRST
+app.use('/api/notes', notesRoutes);          // General notes route SECOND
 
 // Health check
 app.get('/', (req, res) => {
