@@ -111,6 +111,12 @@
             font-size: 13px;
             max-height: 400px;
             overflow-y: auto;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         .success {
@@ -195,6 +201,7 @@ This is my **first** markdown note!
             <h2>📤 Upload Markdown File</h2>
             <label for="fileUpload">Choose a .md file</label>
             <input type="file" id="fileUpload" accept=".md,.markdown,.txt" style="padding: 8px;">
+            <div id="fileInfo" style="margin-top: 10px; color: #888; font-size: 0.9em;"></div>
             
             <button onclick="uploadFile()">Upload File</button>
             <button class="secondary" onclick="clearFileInput()">Clear</button>
@@ -343,18 +350,34 @@ ${escapeHtml(data.data.html)}
         // Upload file
         async function uploadFile() {
             const fileInput = document.getElementById('fileUpload');
-            const file = fileInput.files[0];
             
-            if (!file) {
-                showResponse('uploadResponse', 'Error: Please select a file', false);
+            console.log('Upload started');
+            console.log('File input:', fileInput);
+            console.log('Files array:', fileInput.files);
+            console.log('Files length:', fileInput.files.length);
+            
+            // Check if file exists BEFORE accessing it
+            if (!fileInput.files || fileInput.files.length === 0) {
+                document.getElementById('uploadResponse').innerHTML = '<div class="response error">❌ Error: No file selected. Please choose a file first.</div>';
                 return;
             }
+            
+            const file = fileInput.files[0];
+            console.log('File selected:', file);
+            
+            const uploadDiv = document.getElementById('uploadResponse');
+
+            // Show file info
+            document.getElementById('fileInfo').textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
 
             // Show loading message
-            showResponse('uploadResponse', 'Uploading file...', true);
+            uploadDiv.innerHTML = '<div class="response" style="border-left: 4px solid #2196F3;">⏳ Uploading ' + file.name + ', please wait...</div>';
 
             const formData = new FormData();
             formData.append('file', file);
+            
+            console.log('FormData created');
+            console.log('Sending to:', `${API_URL}/api/notes/upload`);
 
             try {
                 const response = await fetch(`${API_URL}/api/notes/upload`, {
@@ -362,27 +385,63 @@ ${escapeHtml(data.data.html)}
                     body: formData
                 });
 
-                const data = await response.json();
+                console.log('Response received:', response.status);
                 
-                // Show detailed success message
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                // Show detailed success message that STAYS
                 if (data.success) {
-                    const successMsg = `✅ File uploaded successfully!
+                    const successMsg = `🎉 SUCCESS! File uploaded!
 
-File: ${file.name}
-Note ID: ${data.data.id}
-Title: ${data.data.title}
+📁 Original File: ${file.name}
+🆔 Note ID: ${data.data.id}
+📝 Title: ${data.data.title}
+📅 Created: ${new Date(data.data.createdAt).toLocaleString()}
 
-Full Response:
+✅ Your file has been uploaded and saved!
+The note list will refresh in 2 seconds.
+
+Full Server Response:
 ${JSON.stringify(data, null, 2)}`;
-                    showResponse('uploadResponse', successMsg, true);
-                    getAllNotes(); // Refresh the notes list
+                    
+                    uploadDiv.innerHTML = '<div class="response success" style="border-left: 4px solid #4CAF50;">' + successMsg + '</div>';
+                    
+                    // Don't clear the file input so user can see what they uploaded
+                    
+                    // Auto refresh notes after 2 seconds
+                    setTimeout(() => {
+                        getAllNotes();
+                    }, 2000);
                 } else {
-                    showResponse('uploadResponse', JSON.stringify(data, null, 2), false);
+                    uploadDiv.innerHTML = '<div class="response error">❌ Upload failed:\n' + JSON.stringify(data, null, 2) + '</div>';
                 }
             } catch (error) {
-                showResponse('uploadResponse', 'Error: ' + error.message + '\n\nMake sure the upload route is configured correctly.', false);
+                console.error('Upload error:', error);
+                uploadDiv.innerHTML = '<div class="response error">❌ Error: ' + error.message + '\n\nMake sure:\n1. Server is running at http://localhost:3000\n2. Check browser console (F12) for details\n3. Check terminal for server errors</div>';
             }
         }
+
+        // Show file info when selected
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('fileUpload');
+            if (fileInput) {
+                fileInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    const infoDiv = document.getElementById('fileInfo');
+                    if (file) {
+                        infoDiv.textContent = `✓ Selected: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+                        infoDiv.style.color = '#4CAF50';
+                    } else {
+                        infoDiv.textContent = '';
+                    }
+                });
+            }
+        });
 
         // Clear file input
         function clearFileInput() {
@@ -417,13 +476,6 @@ ${JSON.stringify(data, null, 2)}`;
 
         // Check server on load
         checkServer();
-        
-        // Auto-refresh notes every 5 seconds
-        setInterval(() => {
-            if (document.getElementById('notesContainer').innerHTML !== '') {
-                getAllNotes();
-            }
-        }, 5000);
     </script>
 </body>
 </html>
